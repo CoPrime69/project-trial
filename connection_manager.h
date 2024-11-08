@@ -15,6 +15,7 @@ public:
      unordered_map< string, double> calculateBetweennessCentrality();
      unordered_map< string, double> calculateClosenessCentrality();
      unordered_map< string, double> calculatePageRank();
+    vector<User*> getAllUsers();  // Function to get all users
 
      vector< vector<User*>> detectCommunities();
      void saveUserData(const string& file_path);

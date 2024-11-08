@@ -350,6 +350,10 @@ vector<vector<User *>> ConnectionManager::detectCommunities()
     return communities;
 }
 
+vector<User*> ConnectionManager::getAllUsers() {
+    return users;  // Assuming 'users' is a vector that stores all User pointers
+}
+
 vector<pair<User*, User*>> ConnectionManager::recommendConnectionsForNewUser(User* new_user) {
     vector<pair<User*, User*>> recommendations;
     unordered_map<string, int> community_map;
