@@ -18,11 +18,18 @@ void LoginManager::loadUsers() {
 }
 
 void LoginManager::saveUsers() {
-    ofstream file("user_data.csv", ios::out | ios::trunc);
-    if (file.is_open()) {
-        file << "Name,ID,Password,Category,Influence,Branch\n";
-        for (const auto& user_pair : users) {
-            User* user = user_pair.second;
+    ofstream file("user_data.csv", ios::app);  // Open in append mode
+    if (!file.is_open()) {
+        cout << "Error opening file for saving user data!" << endl;
+        return;
+    }
+
+    // Find and append only new users (if not already saved in the file)
+    for (const auto& user_pair : users) {
+        User* user = user_pair.second;
+        
+        // Check if the user already exists in the CSV file
+        if (!isUserExist(user->getID())) {  // Adjust if necessary to prevent duplicate entries
             file << user->getName() << ","
                  << user->getID() << ","
                  << user->getPassword() << ","
@@ -30,10 +37,9 @@ void LoginManager::saveUsers() {
                  << user->getInfluence() << ","
                  << user->getBranch() << "\n";
         }
-        file.close();
-    } else {
-        cout << "Error opening file for saving user data!" << endl;
     }
+
+    file.close();
 }
 
 User* LoginManager::login(const string& id, const string& password) {
@@ -57,12 +63,28 @@ bool LoginManager::registerUser(const string& name, const string& id, const stri
         return false;
     }
 
+    // Create the new user
     User* new_user = new User(name, id, password, category, influence, branch);
+    
+    // Add the user to the system
     cm.addUser(new_user);
     users[id] = new_user;
-    saveUsers();
 
-    cout << "User registered successfully!" << endl;
+    // Append only the new user data to the file
+    ofstream file("user_data.csv", ios::app);
+    if (file.is_open()) {
+        file << new_user->getName() << ","
+             << new_user->getID() << ","
+             << new_user->getPassword() << ","
+             << new_user->getCategory() << ","
+             << new_user->getInfluence() << ","
+             << new_user->getBranch() << "\n";
+        file.close();
+        cout << "User registered successfully and saved to file!" << endl;
+    } else {
+        cout << "Error opening file to save the new user data!" << endl;
+    }
+
     return true;
 }
 

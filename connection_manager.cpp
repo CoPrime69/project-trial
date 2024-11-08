@@ -22,12 +22,16 @@ void ConnectionManager::addConnection(User *user1, User *user2)
     connections[user2->getID()].push_back(user1->getID());
 }
 
-void ConnectionManager::addUser(User* new_user) {
+void ConnectionManager::addUser(User *new_user)
+{
     // users.push_back(new_user);
     connections[new_user->getID()] = {};
-    for (User* user : users) {
-        if (user != new_user && user->getCategory() == new_user->getCategory() && user->getBranch() == new_user->getBranch()) {
-            if (connections[new_user->getID()].size() < 5 && connections[user->getID()].size() < 5) {
+    for (User *user : users)
+    {
+        if (user != new_user && user->getCategory() == new_user->getCategory() && user->getBranch() == new_user->getBranch())
+        {
+            if (connections[new_user->getID()].size() < 5 && connections[user->getID()].size() < 5)
+            {
                 connections[new_user->getID()].push_back(user->getID());
                 connections[user->getID()].push_back(new_user->getID());
             }
@@ -202,48 +206,55 @@ unordered_map<string, double> ConnectionManager::calculateClosenessCentrality()
 //     return pagerank;
 // }
 
-unordered_map<string, double> ConnectionManager::calculatePageRank() {
+unordered_map<string, double> ConnectionManager::calculatePageRank()
+{
     unordered_map<string, double> pagerank;
     unordered_map<string, double> out_degree;
     vector<string> dangling_nodes; // Stores nodes with no outgoing edges
 
     // Initialize pagerank and calculate out-degrees
-    for (const auto &user : users) {
+    for (const auto &user : users)
+    {
         string user_id = user->getID();
         pagerank[user_id] = 1.0 / users.size();
         out_degree[user_id] = connections[user_id].size();
 
-        if (out_degree[user_id] == 0) {
+        if (out_degree[user_id] == 0)
+        {
             dangling_nodes.push_back(user_id); // Mark dangling nodes
         }
     }
 
     double damping_factor = 0.85;
-    double tolerance = 1e-4; // Start with a larger tolerance for faster initial iterations
-    double min_tolerance = 1e-6; // Minimum tolerance to tighten as convergence improves
+    double tolerance = 1e-4;      // Start with a larger tolerance for faster initial iterations
+    double min_tolerance = 1e-6;  // Minimum tolerance to tighten as convergence improves
     double tolerance_decay = 0.9; // Factor to reduce tolerance per iteration
     bool converged = false;
 
-    while (!converged) {
+    while (!converged)
+    {
         unordered_map<string, double> new_pagerank;
         double total_pagerank = 0.0;
         double dangling_sum = 0.0; // Contribution from dangling nodes
 
         // Sum contributions from dangling nodes
-        for (const auto &dangling_id : dangling_nodes) {
+        for (const auto &dangling_id : dangling_nodes)
+        {
             dangling_sum += pagerank[dangling_id];
         }
         dangling_sum *= damping_factor / users.size();
 
-        // Parallelize the computation of new pagerank values
-        #pragma omp parallel for reduction(+:total_pagerank)
-        for (size_t i = 0; i < users.size(); ++i) {
-            User* user = users[i];
+// Parallelize the computation of new pagerank values
+#pragma omp parallel for reduction(+ : total_pagerank)
+        for (size_t i = 0; i < users.size(); ++i)
+        {
+            User *user = users[i];
             string user_id = user->getID();
             double sum = 0.0;
 
             // Sum up the contributions from neighbors
-            for (const auto& neighbor_id : connections[user_id]) {
+            for (const auto &neighbor_id : connections[user_id])
+            {
                 sum += pagerank[neighbor_id] / out_degree[neighbor_id];
             }
 
@@ -254,16 +265,18 @@ unordered_map<string, double> ConnectionManager::calculatePageRank() {
 
         // Normalize new PageRank values and check for convergence
         converged = true;
-        #pragma omp parallel for
-        for (size_t i = 0; i < users.size(); ++i) {
-            User* user = users[i];
+#pragma omp parallel for
+        for (size_t i = 0; i < users.size(); ++i)
+        {
+            User *user = users[i];
             string user_id = user->getID();
 
             new_pagerank[user_id] /= total_pagerank;
 
             // Check convergence
-            if (fabs(new_pagerank[user_id] - pagerank[user_id]) > tolerance) {
-                #pragma omp atomic write
+            if (fabs(new_pagerank[user_id] - pagerank[user_id]) > tolerance)
+            {
+#pragma omp atomic write
                 converged = false;
             }
         }
@@ -276,7 +289,6 @@ unordered_map<string, double> ConnectionManager::calculatePageRank() {
 
     return pagerank;
 }
-
 
 vector<vector<User *>> ConnectionManager::detectCommunities()
 {
@@ -350,29 +362,37 @@ vector<vector<User *>> ConnectionManager::detectCommunities()
     return communities;
 }
 
-vector<User*> ConnectionManager::getAllUsers() {
-    return users;  // Assuming 'users' is a vector that stores all User pointers
+vector<User *> ConnectionManager::getAllUsers()
+{
+    return users; // Assuming 'users' is a vector that stores all User pointers
 }
 
-vector<pair<User*, User*>> ConnectionManager::recommendConnectionsForNewUser(User* new_user) {
-    vector<pair<User*, User*>> recommendations;
+vector<pair<User *, User *>> ConnectionManager::recommendConnectionsForNewUser(User *new_user)
+{
+    vector<pair<User *, User *>> recommendations;
     unordered_map<string, int> community_map;
-    vector<vector<User*>> communities = detectCommunities();
+    vector<vector<User *>> communities = detectCommunities();
 
-    for (int i = 0; i < communities.size(); ++i) {
-        for (User* user : communities[i]) {
+    for (int i = 0; i < communities.size(); ++i)
+    {
+        for (User *user : communities[i])
+        {
             community_map[user->getID()] = i;
         }
     }
 
-    vector<pair<double, pair<User*, User*>>> sortedRecommendations;
-    for (User* user : users) {
-        if (user != new_user && community_map[user->getID()] != community_map[new_user->getID()]) {
+    vector<pair<double, pair<User *, User *>>> sortedRecommendations;
+    for (User *user : users)
+    {
+        if (user != new_user && community_map[user->getID()] != community_map[new_user->getID()])
+        {
             double score = 0.0;
-            if (user->getCategory() == new_user->getCategory()) {
+            if (user->getCategory() == new_user->getCategory())
+            {
                 score += 0.5;
             }
-            if (user->getBranch() == new_user->getBranch()) {
+            if (user->getBranch() == new_user->getBranch())
+            {
                 score += 0.5;
             }
             sortedRecommendations.emplace_back(-score, make_pair(new_user, user));
@@ -380,7 +400,8 @@ vector<pair<User*, User*>> ConnectionManager::recommendConnectionsForNewUser(Use
     }
 
     sort(sortedRecommendations.begin(), sortedRecommendations.end());
-    for (const auto& pair : sortedRecommendations) {
+    for (const auto &pair : sortedRecommendations)
+    {
         recommendations.emplace_back(pair.second);
     }
 
@@ -389,6 +410,15 @@ vector<pair<User*, User*>> ConnectionManager::recommendConnectionsForNewUser(Use
 
 void ConnectionManager::visualizeGraph(const string &output_file, const unordered_map<string, double> &betweenness, const vector<vector<User *>> &communities)
 {
+}
+
+int ConnectionManager::getRandomPosition(int max)
+{
+}
+
+double ConnectionManager::getLuminance(const string &color)
+{
+    
 }
 
 User *ConnectionManager::getUser(const string &id) const
@@ -432,10 +462,14 @@ void ConnectionManager::establishConnections()
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1.0);
 
-    for (User* user1 : users) {
-        for (User* user2 : users) {
-            if (user1 != user2 && user1->getCategory() == user2->getCategory() && user1->getBranch() == user2->getBranch()) {
-                if (dis(gen) < 0.5) {
+    for (User *user1 : users)
+    {
+        for (User *user2 : users)
+        {
+            if (user1 != user2 && user1->getCategory() == user2->getCategory() && user1->getBranch() == user2->getBranch())
+            {
+                if (dis(gen) < 0.5)
+                {
                     connections[user1->getID()].push_back(user2->getID());
                     connections[user2->getID()].push_back(user1->getID());
                 }
@@ -443,10 +477,14 @@ void ConnectionManager::establishConnections()
         }
     }
 
-    for (User* user1 : users) {
-        for (User* user2 : users) {
-            if (user1 != user2 && (user1->getCategory() != user2->getCategory() || user1->getBranch() != user2->getBranch())) {
-                if (dis(gen) < 0.2) {
+    for (User *user1 : users)
+    {
+        for (User *user2 : users)
+        {
+            if (user1 != user2 && (user1->getCategory() != user2->getCategory() || user1->getBranch() != user2->getBranch()))
+            {
+                if (dis(gen) < 0.2)
+                {
                     connections[user1->getID()].push_back(user2->getID());
                     connections[user2->getID()].push_back(user1->getID());
                 }
@@ -455,10 +493,12 @@ void ConnectionManager::establishConnections()
     }
 }
 
-void ConnectionManager::saveUserData(const string& file_path) {
+void ConnectionManager::saveUserData(const string &file_path)
+{
     ofstream file(file_path);
     file << "name,id,password,category,influence,branch\n";
-    for (User* user : users) {
+    for (User *user : users)
+    {
         file << user->getName() << "," << user->getID() << "," << user->getPassword() << "," << user->getCategory() << "," << user->getInfluence() << "," << user->getBranch() << "\n";
     }
     file.close();

@@ -90,7 +90,7 @@ int main() {
     if (join_community_choice == 'y' || join_community_choice == 'Y') {
         // Recommend connections for the user
         vector<pair<User*, User*>> recommendations = cm.recommendConnectionsForNewUser(user);
-        cout << "\nRecommended connections for you:" << endl;
+        // cout << "\nRecommended connections for you:" << endl;
         printRecommendedConnections(recommendations, user);
 
         // Allow the user to select a connection to add
@@ -162,9 +162,14 @@ void printRecommendedCommunities(const vector<vector<User*>>& communities, User*
 
 void printRecommendedConnections(const vector<pair<User*, User*>>& recommendations, User* new_user) {
     cout << "\nRecommended connections based on category and influence:" << endl;
+    int counter = 0;
     for (const auto& pair : recommendations) {
         if (pair.first->getCategory() == new_user->getCategory() && pair.first->getBranch() == new_user->getBranch()) {
             cout << pair.first->getName() << " <-> " << pair.second->getName() << endl;
+            counter++;
+        }
+        if(counter >= 5) {
+            break;
         }
     }
 }

@@ -12,14 +12,17 @@ class ConnectionManager {
 public:
     ConnectionManager(const  string& user_data_file);
 
-     unordered_map< string, double> calculateBetweennessCentrality();
-     unordered_map< string, double> calculateClosenessCentrality();
-     unordered_map< string, double> calculatePageRank();
+    unordered_map< string, double> calculateBetweennessCentrality();
+    unordered_map< string, double> calculateClosenessCentrality();
+    unordered_map< string, double> calculatePageRank();
     vector<User*> getAllUsers();  // Function to get all users
+    int getRandomPosition(int max);
+    double getLuminance(const string &color);
 
-     vector< vector<User*>> detectCommunities();
-     void saveUserData(const string& file_path);
-     vector< pair<User*, User*>> recommendConnectionsForNewUser(User* new_user);
+
+    vector< vector<User*>> detectCommunities();
+    void saveUserData(const string& file_path);
+    vector< pair<User*, User*>> recommendConnectionsForNewUser(User* new_user);
 
     void visualizeGraph(const  string& output_file, const  unordered_map< string, double>& betweenness, const  vector< vector<User*>>& communities);
     void addUser(User* new_user);
@@ -32,7 +35,7 @@ public:
 
 
 private:
-     unordered_map< string,  vector< string>> connections;
+    unordered_map< string,  vector< string>> connections;
 
     
 };
