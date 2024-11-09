@@ -78,15 +78,16 @@ void GraphVisualizer::createGraph(const std::string& matrix_file,
     dot_out << generateDotFormat(matrix, user_ids, communities);
     dot_out.close();
     
+    // Modified command for 4K resolution (3840 x 2160)
     std::string command = "dot -Kneato"
                          " -Tpng"
-                         " -Gdpi=300"
+                         " -Gdpi=96"
+                         " -Gsize=\"40,22.5!\""  // 3840/96 = 40 inches, 2160/96 = 22.5 inches
                          " -Goverlap=scale"
                          " -Gsplines=true"
                          " -Gstart=random"
                          " -Gepsilon=0.0001"
                          " -Gmaxiter=1000"
-                         " -Gresolution=\"1920,1080\""
                          " " + dot_file + " -o " + output_file;
     
     int result = system(command.c_str());
@@ -226,26 +227,30 @@ std::string GraphVisualizer::generateDotFormat(
             auto user2_comm_it = userCommunityMap.find(user_ids[j]);
             
             // Skip if either user is not found in communities
-            if (user1_comm_it == userCommunityMap.end() || 
-                user2_comm_it == userCommunityMap.end()) {
-                continue;
-            }
+            // if (user1_comm_it == userCommunityMap.end() || 
+            //     user2_comm_it == userCommunityMap.end()) {
+            //     continue;
+            // }
 
-            bool inSameCommunity = (user1_comm_it->second == user2_comm_it->second);
+            // bool inSameCommunity = (user1_comm_it->second == user2_comm_it->second);
             bool exceedsThreshold = (matrix[i][j] >= weight_threshold);
 
             // Add edge if either condition is met
-            if (inSameCommunity || exceedsThreshold) {
+            // if (inSameCommunity || exceedsThreshold) {
+            if (exceedsThreshold) {
+
                 double len = 5.0 / matrix[i][j];
                 dot << "    \"" << user_ids[i] << "\" -- \"" << user_ids[j] 
                     << "\" [len=" << len;
                 
                 // Optionally, we can style edges differently based on the connection type
-                if (inSameCommunity && exceedsThreshold) {
-                    dot << ", penwidth=2.5"; // Thicker edges for strong in-community connections
-                } else if (inSameCommunity) {
-                    dot << ", style=dashed"; // Dashed for same community but weak connection
-                }
+                // if (inSameCommunity && exceedsThreshold) {
+                //     dot << ", penwidth=2.5"; // Thicker edges for strong in-community connections
+                // // } else if (inSameCommunity) {
+                // //     dot << ", style=dashed"; // Dashed for same community but weak connection
+                // // }
+
+                if(exceedsThreshold) dot << ", penwidth=2.5"; // Thicker edges for strong connections
                 
                 dot << "];\n";
             }

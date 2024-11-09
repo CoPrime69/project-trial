@@ -10,7 +10,10 @@ AdjacencyMatrix::AdjacencyMatrix(const std::string& matrix_file) : matrix_file_p
 }
 
 AdjacencyMatrix::~AdjacencyMatrix() {
-    saveToFile();
+    // Only save if there were changes
+    if (hasChanges) {
+        saveToFile();
+    }
 }
 
 static std::mt19937& getRNG() {
@@ -26,6 +29,13 @@ static double getRandomWeight(double mean, double stddev = 2.5) {
 
 void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User*>& users, 
                                          const std::vector<std::vector<User*>>& communities) {
+    // Check if file exists first
+    std::ifstream check_file(matrix_file_path);
+    if (check_file.good()) {
+        check_file.close();
+        return; // File exists, matrix already loaded in constructor
+    }
+    
     // Only initialize if matrix is empty (first time)
     if (!matrix.empty()) return;
 
@@ -52,7 +62,8 @@ void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User*>& users,
         }
     }
 
-    saveToFile();
+    hasChanges = true;
+    // saveToFile(); // Initial save
 }
 
 void AdjacencyMatrix::addNewUser(const std::string& userId) {
@@ -74,6 +85,8 @@ void AdjacencyMatrix::addNewUser(const std::string& userId) {
         row.push_back(0.0);
     }
 
+    hasChanges = true;
+    // Save immediately after adding new user
     saveToFile();
 }
 
@@ -104,7 +117,7 @@ void AdjacencyMatrix::updateConnection(const std::string& user1_id, const std::s
 
     if (community1 != -1 && community2 != -1) {
         if (community1 == community2) {
-            weight += getRandomWeight(5.0);  // Additional weight for same community
+            weight += getRandomWeight(6.0);  // Additional weight for same community
         } else {
             // Calculate inter-community similarity
             // You could add more sophisticated similarity metrics here
@@ -118,8 +131,10 @@ void AdjacencyMatrix::updateConnection(const std::string& user1_id, const std::s
     // Update matrix (symmetric)
     matrix[idx1][idx2] = weight;
     matrix[idx2][idx1] = weight;
-
-    saveToFile();
+    hasChanges = true;
+    
+    // Save changes immediately after updating weights
+    saveToFile();  // This ensures weights are persisted right away
 }
 
 double AdjacencyMatrix::calculateConnectionWeight(User* user1, User* user2,
@@ -127,12 +142,12 @@ double AdjacencyMatrix::calculateConnectionWeight(User* user1, User* user2,
     double weight = 0.0;
 
     // Base similarity checks
-    if (user1->getCategory() == user2->getCategory()) weight += getRandomWeight(4.0);
-    if (user1->getBranch() == user2->getBranch()) weight += getRandomWeight(6.0);
+    if (user1->getCategory() == user2->getCategory()) weight += getRandomWeight(8.0);
+    if (user1->getBranch() == user2->getBranch()) weight += getRandomWeight(9.0);
 
     // Community based weight
     if (areInSameCommunity(user1->getID(), user2->getID(), communities)) {
-        weight += getRandomWeight(10.0);
+        weight += getRandomWeight(11.0);
     }
 
     // Influence similarity (normalized)
@@ -168,6 +183,7 @@ void AdjacencyMatrix::saveToFile() {
     }
 
     file.close();
+    hasChanges = false;  // Reset changes flag after saving
 }
 
 void AdjacencyMatrix::loadFromFile() {
@@ -264,4 +280,10 @@ bool AdjacencyMatrix::areInSameCommunity(const std::string& user1_id, const std:
     int community1 = findCommunityIndex(user1_id, communities);
     int community2 = findCommunityIndex(user2_id, communities);
     return (community1 != -1 && community1 == community2);
+}
+
+void AdjacencyMatrix::forceSave() {
+    if (hasChanges) {
+        saveToFile();
+    }
 }

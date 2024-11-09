@@ -8,7 +8,7 @@
 
 class GraphVisualizer {
 public:
-    GraphVisualizer(double threshold = 17.0);  // Constructor with weight threshold
+    GraphVisualizer(double threshold = 15.0);  // Constructor with weight threshold
     
     // Main visualization function
     void createGraph(const std::string& matrix_file, 

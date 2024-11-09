@@ -37,6 +37,7 @@ public:
     
     // Print matrix (for debugging)
     void printMatrix() const;
+    void forceSave();
 
 private:
     std::string matrix_file_path;
@@ -47,6 +48,7 @@ private:
     
     bool areInSameCommunity(const std::string& user1_id, const std::string& user2_id, 
                            const std::vector<std::vector<User*>>& communities) const;
+    bool hasChanges = false;
 
     
 };

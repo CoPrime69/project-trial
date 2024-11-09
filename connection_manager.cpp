@@ -548,7 +548,7 @@ vector<pair<User *, User *>> ConnectionManager::recommendConnectionsForNewUser(U
 void ConnectionManager::visualizeGraph(const string &output_file, 
                                      const unordered_map<string, double> &betweenness,
                                      const vector<vector<User *>> &communities) {
-    GraphVisualizer visualizer(17.0);
+    GraphVisualizer visualizer(15.0);
     visualizer.createGraph("adjacency_matrix.csv", communities, output_file);
 }
 
@@ -618,7 +618,7 @@ void ConnectionManager::establishConnections() {
                     connections[user2->getID()].push_back(user1->getID());
                     
                     // Update the connection weight in the adjacency matrix
-                    adjacency_matrix->updateConnection(user1->getID(), user2->getID(), communities);
+                    // adjacency_matrix->updateConnection(user1->getID(), user2->getID(), communities);
                 }
             }
         }
