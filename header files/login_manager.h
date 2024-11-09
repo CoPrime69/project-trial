@@ -1,9 +1,10 @@
 #ifndef LOGIN_MANAGER_H
 #define LOGIN_MANAGER_H
 
-#include <string>
-#include <unordered_map>
+#include <bits/stdc++.h>
 #include "connection_manager.h"
+
+using namespace std;
 
 class LoginManager
 {
@@ -11,23 +12,23 @@ public:
     LoginManager(ConnectionManager &cm);
 
     // Authenticates the user with given ID and password
-    bool authenticateUser(const std::string &user_id, const std::string &password);
+    bool authenticateUser(const  string &user_id, const  string &password);
 
     // Logs in the user if credentials are correct
-    User *login(const std::string &id, const std::string &password);
+    User *login(const  string &id, const  string &password);
 
     // Registers a new user if ID does not already exist
-    bool registerUser(const std::string &name, const std::string &id, const std::string &password, const std::string &category, double influence, const std::string &branch);
+    bool registerUser(const  string &name, const  string &id, const  string &password, const  string &category, double influence, const  string &branch);
 
     // Checks if the user exists in the system
-    bool isUserExist(const std::string &id);
+    bool isUserExist(const  string &id);
 
     // Gets user object by user ID
-    User *getUserById(const std::string &id);
+    User *getUserById(const  string &id);
 
 private:
     ConnectionManager &cm;
-    std::unordered_map<std::string, User *> users;
+     unordered_map< string, User *> users;
 
     // Loads user data from the file into memory
     void loadUsers();

@@ -1,11 +1,9 @@
 #include "adjacency_matrix.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cmath>
-#include <algorithm>
+#include <bits/stdc++.h>
 
-AdjacencyMatrix::AdjacencyMatrix(const std::string &matrix_file) : matrix_file_path(matrix_file)
+using namespace std;
+
+AdjacencyMatrix::AdjacencyMatrix(const string &matrix_file) : matrix_file_path(matrix_file)
 {
     loadFromFile();
 }
@@ -19,24 +17,24 @@ AdjacencyMatrix::~AdjacencyMatrix()
     }
 }
 
-static std::mt19937 &getRNG()
+static mt19937 &getRNG()
 {
-    static std::mt19937 rng(std::time(nullptr));
+    static mt19937 rng(time(nullptr));
     return rng;
 }
 
 // Helper function to get a random weight from normal distribution
 static double getRandomWeight(double mean, double stddev = 2.5)
 {
-    std::normal_distribution<double> distribution(mean, stddev);
+    normal_distribution<double> distribution(mean, stddev);
     return distribution(getRNG());
 }
 
-void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User *> &users,
-                                           const std::vector<std::vector<User *>> &communities)
+void AdjacencyMatrix::initializeBaseMatrix(const vector<User *> &users,
+                                           const vector<vector<User *>> &communities)
 {
     // Check if file exists first
-    std::ifstream check_file(matrix_file_path);
+    ifstream check_file(matrix_file_path);
     if (check_file.good())
     {
         check_file.close();
@@ -48,10 +46,10 @@ void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User *> &users,
         return;
 
     // Process first 100 users or all users if less than 100
-    size_t num_users = std::min(size_t(100), users.size());
+    size_t num_users = min(size_t(100), users.size());
 
     // Initialize matrix size
-    matrix.resize(num_users, std::vector<double>(num_users, 0.0));
+    matrix.resize(num_users, vector<double>(num_users, 0.0));
     user_ids.clear();
     user_index_map.clear();
 
@@ -77,7 +75,7 @@ void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User *> &users,
     saveToFile(); // Initial save
 }
 
-void AdjacencyMatrix::addNewUser(const std::string &userId)
+void AdjacencyMatrix::addNewUser(const string &userId)
 {
     // Check if user already exists
     if (user_index_map.find(userId) != user_index_map.end())
@@ -91,7 +89,7 @@ void AdjacencyMatrix::addNewUser(const std::string &userId)
     user_ids.push_back(userId);
 
     // Add new row
-    matrix.push_back(std::vector<double>(new_index, 0.0));
+    matrix.push_back(vector<double>(new_index, 0.0));
 
     // Add new column to all existing rows
     for (auto &row : matrix)
@@ -104,8 +102,8 @@ void AdjacencyMatrix::addNewUser(const std::string &userId)
     saveToFile();
 }
 
-void AdjacencyMatrix::updateConnection(const std::string &user1_id, const std::string &user2_id,
-                                       const std::vector<std::vector<User *>> &communities)
+void AdjacencyMatrix::updateConnection(const string &user1_id, const string &user2_id,
+                                       const vector<vector<User *>> &communities)
 {
     // Get matrix indices
     auto it1 = user_index_map.find(user1_id);
@@ -147,7 +145,7 @@ void AdjacencyMatrix::updateConnection(const std::string &user1_id, const std::s
     }
 
     // Ensure weight is between 13 and 20
-    weight = std::min(20.0, std::max(13.0, getRandomWeight(weight)));
+    weight = min(20.0, max(13.0, getRandomWeight(weight)));
 
     // Update matrix (symmetric)
     matrix[idx1][idx2] = weight;
@@ -159,7 +157,7 @@ void AdjacencyMatrix::updateConnection(const std::string &user1_id, const std::s
 }
 
 double AdjacencyMatrix::calculateConnectionWeight(User *user1, User *user2,
-                                                  const std::vector<std::vector<User *>> &communities)
+                                                  const vector<vector<User *>> &communities)
 {
     double weight = 0.0;
 
@@ -176,19 +174,19 @@ double AdjacencyMatrix::calculateConnectionWeight(User *user1, User *user2,
     }
 
     // Influence similarity (normalized)
-    double influence_diff = std::abs(user1->getInfluence() - user2->getInfluence());
-    weight += std::max(0.0, 5.0 * (1.0 - influence_diff / 100.0));
+    double influence_diff = abs(user1->getInfluence() - user2->getInfluence());
+    weight += max(0.0, 5.0 * (1.0 - influence_diff / 100.0));
 
     // Ensure weight is between 0 and 25
-    return std::min(25.0, std::max(0.0, getRandomWeight(weight)));
+    return min(25.0, max(0.0, getRandomWeight(weight)));
 }
 
 void AdjacencyMatrix::saveToFile()
 {
-    std::ofstream file(matrix_file_path);
+    ofstream file(matrix_file_path);
     if (!file.is_open())
     {
-        std::cerr << "Error: Could not open matrix file for writing." << std::endl;
+        cerr << "Error: Could not open matrix file for writing." << endl;
         return;
     }
 
@@ -219,10 +217,10 @@ void AdjacencyMatrix::saveToFile()
 
 void AdjacencyMatrix::loadFromFile()
 {
-    std::ifstream file(matrix_file_path);
+    ifstream file(matrix_file_path);
     if (!file.is_open())
     {
-        std::cout << "No existing matrix file found. Will create new matrix." << std::endl;
+        cout << "No existing matrix file found. Will create new matrix." << endl;
         return;
     }
 
@@ -230,17 +228,17 @@ void AdjacencyMatrix::loadFromFile()
     user_ids.clear();
     user_index_map.clear();
 
-    std::string line;
+    string line;
 
     // Read header
-    if (std::getline(file, line))
+    if (getline(file, line))
     {
-        std::stringstream ss(line);
-        std::string cell;
-        std::getline(ss, cell, ','); // Skip empty cell
+        stringstream ss(line);
+        string cell;
+        getline(ss, cell, ','); // Skip empty cell
 
         int idx = 0;
-        while (std::getline(ss, cell, ','))
+        while (getline(ss, cell, ','))
         {
             if (!cell.empty())
             {
@@ -251,18 +249,18 @@ void AdjacencyMatrix::loadFromFile()
     }
 
     // Read matrix data
-    while (std::getline(file, line))
+    while (getline(file, line))
     {
-        std::stringstream ss(line);
-        std::string cell;
-        std::getline(ss, cell, ','); // Skip row header
+        stringstream ss(line);
+        string cell;
+        getline(ss, cell, ','); // Skip row header
 
-        std::vector<double> row;
-        while (std::getline(ss, cell, ','))
+        vector<double> row;
+        while (getline(ss, cell, ','))
         {
             if (!cell.empty())
             {
-                row.push_back(std::stod(cell));
+                row.push_back(stod(cell));
             }
         }
         if (!row.empty())
@@ -274,7 +272,7 @@ void AdjacencyMatrix::loadFromFile()
     file.close();
 }
 
-double AdjacencyMatrix::getConnectionWeight(const std::string &user1_id, const std::string &user2_id) const
+double AdjacencyMatrix::getConnectionWeight(const string &user1_id, const string &user2_id) const
 {
     auto it1 = user_index_map.find(user1_id);
     auto it2 = user_index_map.find(user2_id);
@@ -287,7 +285,7 @@ double AdjacencyMatrix::getConnectionWeight(const std::string &user1_id, const s
     return matrix[it1->second][it2->second];
 }
 
-void AdjacencyMatrix::removeConnection(const std::string &user1_id, const std::string &user2_id)
+void AdjacencyMatrix::removeConnection(const string &user1_id, const string &user2_id)
 {
     auto it1 = user_index_map.find(user1_id);
     auto it2 = user_index_map.find(user2_id);
@@ -302,27 +300,27 @@ void AdjacencyMatrix::removeConnection(const std::string &user1_id, const std::s
 void AdjacencyMatrix::printMatrix() const
 {
     // Print header
-    std::cout << "\t";
+    cout << "\t";
     for (const auto &id : user_ids)
     {
-        std::cout << id << "\t";
+        cout << id << "\t";
     }
-    std::cout << "\n";
+    cout << "\n";
 
     // Print matrix rows
     for (size_t i = 0; i < matrix.size(); ++i)
     {
-        std::cout << user_ids[i] << "\t";
+        cout << user_ids[i] << "\t";
         for (size_t j = 0; j < matrix[i].size(); ++j)
         {
-            std::cout << matrix[i][j] << "\t";
+            cout << matrix[i][j] << "\t";
         }
-        std::cout << "\n";
+        cout << "\n";
     }
 }
 
-int AdjacencyMatrix::findCommunityIndex(const std::string &user_id,
-                                        const std::vector<std::vector<User *>> &communities) const
+int AdjacencyMatrix::findCommunityIndex(const string &user_id,
+                                        const vector<vector<User *>> &communities) const
 {
     for (size_t i = 0; i < communities.size(); ++i)
     {
@@ -337,8 +335,8 @@ int AdjacencyMatrix::findCommunityIndex(const std::string &user_id,
     return -1;
 }
 
-bool AdjacencyMatrix::areInSameCommunity(const std::string &user1_id, const std::string &user2_id,
-                                         const std::vector<std::vector<User *>> &communities) const
+bool AdjacencyMatrix::areInSameCommunity(const string &user1_id, const string &user2_id,
+                                         const vector<vector<User *>> &communities) const
 {
     int community1 = findCommunityIndex(user1_id, communities);
     int community2 = findCommunityIndex(user2_id, communities);

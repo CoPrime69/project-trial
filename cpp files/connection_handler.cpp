@@ -1,6 +1,8 @@
 #include "connection_handler.h"
 #include "print_utilities.h"
-#include <iostream>
+#include <bits/stdc++.h>
+
+using namespace std;
 
 void ConnectionHandler::handleConnectionManagement(ConnectionManager &cm, User *user)
 {
@@ -22,22 +24,22 @@ void ConnectionHandler::handleConnectionManagement(ConnectionManager &cm, User *
         case 4:
             return;
         default:
-            std::cout << "Invalid option. Please try again." << std::endl;
+             cout << "Invalid option. Please try again." <<  endl;
         }
     }
 }
 
 int ConnectionHandler::getMenuChoice()
 {
-    std::cout << "\nConnection Management Menu:" << std::endl;
-    std::cout << "1. View your connections" << std::endl;
-    std::cout << "2. Add new connection" << std::endl;
-    std::cout << "3. Remove connection" << std::endl;
-    std::cout << "4. Exit" << std::endl;
-    std::cout << "Choose an option: ";
+     cout << "\nConnection Management Menu:" <<  endl;
+     cout << "1. View your connections" <<  endl;
+     cout << "2. Add new connection" <<  endl;
+     cout << "3. Remove connection" <<  endl;
+     cout << "4. Exit" <<  endl;
+     cout << "Choose an option: ";
 
     int choice;
-    std::cin >> choice;
+     cin >> choice;
     return choice;
 }
 
@@ -49,7 +51,7 @@ void ConnectionHandler::viewConnections(ConnectionManager &cm, User *user)
 void ConnectionHandler::addNewConnections(ConnectionManager &cm, User *user)
 {
 
-        std::vector<std::pair<User *, User *>> recommendations = cm.recommendConnectionsForNewUser(user);
+         vector< pair<User *, User *>> recommendations = cm.recommendConnectionsForNewUser(user);
         PrintUtilities::printRecommendedConnections(recommendations, user);
 
         int selected_connection = PrintUtilities::selectConnection(recommendations);
@@ -57,33 +59,33 @@ void ConnectionHandler::addNewConnections(ConnectionManager &cm, User *user)
         {
             User *selected_user = recommendations[selected_connection].second;
             cm.addConnection(user, selected_user);
-            std::cout << "Successfully connected with " << selected_user->getName() << "!" << std::endl;
+             cout << "Successfully connected with " << selected_user->getName() << "!" <<  endl;
         }
 
-        // std::cout << "Add another connection? (y/n): ";
+        //  cout << "Add another connection? (y/n): ";
         // char more_choice;
-        // std::cin >> more_choice;
+        //  cin >> more_choice;
         // if (more_choice != 'y' && more_choice != 'Y')
     
 }
 
 void ConnectionHandler::removeConnection(ConnectionManager &cm, User *user)
 {
-    std::cout << "\nYour current connections:" << std::endl;
+     cout << "\nYour current connections:" <<  endl;
     cm.viewConnections(user);
 
-    std::cout << "\nEnter the ID of the connection you want to remove: ";
-    std::string remove_id;
-    std::cin >> remove_id;
+     cout << "\nEnter the ID of the connection you want to remove: ";
+     string remove_id;
+     cin >> remove_id;
 
     User *connection_to_remove = cm.getUser(remove_id);
     if (connection_to_remove)
     {
         cm.removeConnection(user, connection_to_remove);
-        std::cout << "Successfully removed connection with " << connection_to_remove->getName() << std::endl;
+         cout << "Successfully removed connection with " << connection_to_remove->getName() <<  endl;
     }
     else
     {
-        std::cout << "Invalid user ID or not in your connections." << std::endl;
+         cout << "Invalid user ID or not in your connections." <<  endl;
     }
 }

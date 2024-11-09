@@ -1,9 +1,10 @@
 #ifndef USER_H
 #define USER_H
-using namespace std;
 
 #include <string>
+
 using namespace std;
+
 class User
 {
 public:

@@ -1,8 +1,5 @@
 #include "login_manager.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
+#include <bits/stdc++.h>
 
 using namespace std;
 

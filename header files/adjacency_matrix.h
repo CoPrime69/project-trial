@@ -1,32 +1,30 @@
 #ifndef ADJACENCY_MATRIX_H
 #define ADJACENCY_MATRIX_H
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <ctime>
-#include <random>
+#include <bits/stdc++.h>
 #include "user.h"
+
+using namespace std;
 
 class AdjacencyMatrix
 {
 public:
-    AdjacencyMatrix(const std::string &matrix_file);
+    AdjacencyMatrix(const  string &matrix_file);
     ~AdjacencyMatrix();
 
     // Initialize matrix for first 100 users
-    void initializeBaseMatrix(const std::vector<User *> &users, const std::vector<std::vector<User *>> &communities);
+    void initializeBaseMatrix(const  vector<User *> &users, const  vector< vector<User *>> &communities);
 
     // Add new user to matrix (with zero connections)
-    void addNewUser(const std::string &userId);
+    void addNewUser(const  string &userId);
 
     // Update connection weight between two users
-    void updateConnection(const std::string &user1_id, const std::string &user2_id, const std::vector<std::vector<User *>> &communities);
+    void updateConnection(const  string &user1_id, const  string &user2_id, const  vector< vector<User *>> &communities);
 
     // Calculate connection weight based on user similarities
-    double calculateConnectionWeight(User *user1, User *user2, const std::vector<std::vector<User *>> &communities);
+    double calculateConnectionWeight(User *user1, User *user2, const  vector< vector<User *>> &communities);
 
-    void removeConnection(const std::string &user1_id, const std::string &user2_id);
+    void removeConnection(const  string &user1_id, const  string &user2_id);
 
     // Save matrix to CSV file
     void saveToFile();
@@ -35,14 +33,14 @@ public:
     void loadFromFile();
 
     // Get connection weight between two users
-    double getConnectionWeight(const std::string &user1_id, const std::string &user2_id) const;
+    double getConnectionWeight(const  string &user1_id, const  string &user2_id) const;
 
-    const std::unordered_map<std::string, int> &getUserIndexMap() const
+    const  unordered_map< string, int> &getUserIndexMap() const
     {
         return user_index_map;
     }
 
-    const std::vector<std::vector<double>> &getMatrix() const
+    const  vector< vector<double>> &getMatrix() const
     {
         return matrix;
     }
@@ -52,14 +50,14 @@ public:
     void forceSave();
 
 private:
-    std::string matrix_file_path;
-    std::vector<std::string> user_ids;                   // To maintain order of users
-    std::unordered_map<std::string, int> user_index_map; // Maps user IDs to matrix indices
-    std::vector<std::vector<double>> matrix;             // The adjacency matrix
-    int findCommunityIndex(const std::string &user_id, const std::vector<std::vector<User *>> &communities) const;
+     string matrix_file_path;
+     vector< string> user_ids;                   // To maintain order of users
+     unordered_map< string, int> user_index_map; // Maps user IDs to matrix indices
+     vector< vector<double>> matrix;             // The adjacency matrix
+    int findCommunityIndex(const  string &user_id, const  vector< vector<User *>> &communities) const;
 
-    bool areInSameCommunity(const std::string &user1_id, const std::string &user2_id,
-                            const std::vector<std::vector<User *>> &communities) const;
+    bool areInSameCommunity(const  string &user1_id, const  string &user2_id,
+                            const  vector< vector<User *>> &communities) const;
     bool hasChanges = false;
 };
 

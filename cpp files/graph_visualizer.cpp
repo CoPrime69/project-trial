@@ -1,37 +1,34 @@
 #include "graph_visualizer.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cstdlib>
-#include <array>
-#include <iomanip>
+#include <bits/stdc++.h>
 // #include <filesystem>
+
+using namespace std;
 
 GraphVisualizer::GraphVisualizer(double threshold) : weight_threshold(threshold) {}
 
-std::vector<std::vector<double>> GraphVisualizer::readAdjacencyMatrix(
-    const std::string &matrix_file,
-    std::vector<std::string> &user_ids)
+ vector< vector<double>> GraphVisualizer::readAdjacencyMatrix(
+    const  string &matrix_file,
+     vector< string> &user_ids)
 {
 
-    std::ifstream file(matrix_file);
+     ifstream file(matrix_file);
     if (!file.is_open())
     {
-        std::cerr << "Could not open matrix file: " << matrix_file << std::endl;
-        return std::vector<std::vector<double>>();
+         cerr << "Could not open matrix file: " << matrix_file <<  endl;
+        return  vector< vector<double>>();
     }
 
-    std::vector<std::vector<double>> matrix;
-    std::string line;
+     vector< vector<double>> matrix;
+     string line;
 
     // Read header to get user IDs
-    if (std::getline(file, line))
+    if ( getline(file, line))
     {
-        std::stringstream ss(line);
-        std::string cell;
-        std::getline(ss, cell, ','); // Skip empty cell
+         stringstream ss(line);
+         string cell;
+         getline(ss, cell, ','); // Skip empty cell
 
-        while (std::getline(ss, cell, ','))
+        while ( getline(ss, cell, ','))
         {
             if (!cell.empty())
             {
@@ -41,25 +38,25 @@ std::vector<std::vector<double>> GraphVisualizer::readAdjacencyMatrix(
     }
 
     // Read matrix data
-    while (std::getline(file, line))
+    while ( getline(file, line))
     {
-        std::vector<double> row;
-        std::stringstream ss(line);
-        std::string cell;
+         vector<double> row;
+         stringstream ss(line);
+         string cell;
 
-        std::getline(ss, cell, ','); // Skip row header
+         getline(ss, cell, ','); // Skip row header
 
-        while (std::getline(ss, cell, ','))
+        while ( getline(ss, cell, ','))
         {
             if (!cell.empty())
             {
                 try
                 {
-                    row.push_back(std::stod(cell));
+                    row.push_back( stod(cell));
                 }
-                catch (const std::exception &e)
+                catch (const  exception &e)
                 {
-                    std::cerr << "Error converting value: " << cell << std::endl;
+                     cerr << "Error converting value: " << cell <<  endl;
                     row.push_back(0.0);
                 }
             }
@@ -75,27 +72,27 @@ std::vector<std::vector<double>> GraphVisualizer::readAdjacencyMatrix(
     return matrix;
 }
 
-void GraphVisualizer::createGraph(const std::string& matrix_file,
-                                const std::vector<std::vector<User*>>& communities,
-                                const std::string& output_file) {
-    std::vector<std::string> user_ids;
-    std::vector<std::vector<double>> matrix = readAdjacencyMatrix(matrix_file, user_ids);
+void GraphVisualizer::createGraph(const  string& matrix_file,
+                                const  vector< vector<User*>>& communities,
+                                const  string& output_file) {
+     vector< string> user_ids;
+     vector< vector<double>> matrix = readAdjacencyMatrix(matrix_file, user_ids);
 
     if (matrix.empty()) {
-        std::cerr << "Failed to read adjacency matrix" << std::endl;
+         cerr << "Failed to read adjacency matrix" <<  endl;
         return;
     }
 
-    std::string dot_file = "temp_graph.dot";
-    std::ofstream dot_out(dot_file);
+     string dot_file = "temp_graph.dot";
+     ofstream dot_out(dot_file);
     dot_out << generateDotFormat(matrix, user_ids, communities);
     dot_out.close();
 
     // Construct the output path by combining png_graphs directory with output filename
-    std::string output_path = "png_graphs/" + output_file;
+     string output_path = "png_graphs/" + output_file;
 
     // Modified command for 4K resolution (3840 x 3840) with path to png_graphs folder
-    std::string command = "dot -Kneato"
+     string command = "dot -Kneato"
                          " -Tpng"
                          " -Gdpi=96"
                          " -Gsize=\"40,40!\""  // 3840/96 = 40 inches
@@ -109,40 +106,40 @@ void GraphVisualizer::createGraph(const std::string& matrix_file,
     int result = system(command.c_str());
 
     if (result == 0) {
-        std::cout << "Graph visualization created successfully: " << output_path << std::endl;
-        std::remove(dot_file.c_str());
+         cout << "Graph visualization created successfully: " << output_path <<  endl;
+         remove(dot_file.c_str());
     } else {
-        std::cerr << "Failed to create graph visualization" << std::endl;
+         cerr << "Failed to create graph visualization" <<  endl;
     }
 }
 
-// void GraphVisualizer::createGraph(const std::string& matrix_file,
-//                                 const std::vector<std::vector<User*>>& communities,
-//                                 const std::string& output_file) {
+// void GraphVisualizer::createGraph(const  string& matrix_file,
+//                                 const  vector< vector<User*>>& communities,
+//                                 const  string& output_file) {
 //     // Create png_graphs directory if it doesn't exist
-//     std::filesystem::path dir_path = "png_graphs";
-//     if (!std::filesystem::exists(dir_path)) {
-//         std::filesystem::create_directory(dir_path);
+//      filesystem::path dir_path = "png_graphs";
+//     if (! filesystem::exists(dir_path)) {
+//          filesystem::create_directory(dir_path);
 //     }
     
-//     std::vector<std::string> user_ids;
-//     std::vector<std::vector<double>> matrix = readAdjacencyMatrix(matrix_file, user_ids);
+//      vector< string> user_ids;
+//      vector< vector<double>> matrix = readAdjacencyMatrix(matrix_file, user_ids);
     
 //     if (matrix.empty()) {
-//         std::cerr << "Failed to read adjacency matrix" << std::endl;
+//          cerr << "Failed to read adjacency matrix" <<  endl;
 //         return;
 //     }
     
-//     std::string dot_file = "temp_graph.dot";
-//     std::ofstream dot_out(dot_file);
+//      string dot_file = "temp_graph.dot";
+//      ofstream dot_out(dot_file);
 //     dot_out << generateDotFormat(matrix, user_ids, communities);
 //     dot_out.close();
     
 //     // Modify output path to use png_graphs folder
-//     std::string output_path = (dir_path / std::filesystem::path(output_file)).string();
+//      string output_path = (dir_path /  filesystem::path(output_file)).string();
     
 //     // Modified command for 4K resolution (3840 x 2160) with additional space for legend
-//     std::string command = "dot -Kneato"
+//      string command = "dot -Kneato"
 //                          " -Tpng"
 //                          " -Gdpi=96"
 //                          " -Gsize=\"40,24!\""  // Increased height for legend
@@ -156,20 +153,20 @@ void GraphVisualizer::createGraph(const std::string& matrix_file,
 //     int result = system(command.c_str());
     
 //     if (result == 0) {
-//         std::cout << "Graph visualization created successfully: " << output_path << std::endl;
-//         std::remove(dot_file.c_str());
+//          cout << "Graph visualization created successfully: " << output_path <<  endl;
+//          remove(dot_file.c_str());
 //     } else {
-//         std::cerr << "Failed to create graph visualization" << std::endl;
+//          cerr << "Failed to create graph visualization" <<  endl;
 //     }
 // }
 
-// std::string GraphVisualizer::generateDotFormat(
-//     const std::vector<std::vector<double>> &matrix,
-//     const std::vector<std::string> &user_ids,
-//     const std::vector<std::vector<User *>> &communities)
+//  string GraphVisualizer::generateDotFormat(
+//     const  vector< vector<double>> &matrix,
+//     const  vector< string> &user_ids,
+//     const  vector< vector<User *>> &communities)
 // {
 
-//     std::stringstream dot;
+//      stringstream dot;
 //     dot << "graph Network {\n";
 
 //     // Graph attributes remain the same
@@ -199,11 +196,11 @@ void GraphVisualizer::createGraph(const std::string& matrix_file,
 //         << "    ];\n\n";
 
 //     // Define colors for different communities
-//     const std::array<std::string, 10> colors = {{"\"#ff7f7f\"", "\"#7fbfff\"", "\"#7fff7f\"", "\"#ff7fff\"", "\"#ffff7f\"",
+//     const  array< string, 10> colors = {{"\"#ff7f7f\"", "\"#7fbfff\"", "\"#7fff7f\"", "\"#ff7fff\"", "\"#ffff7f\"",
 //                                                  "\"#7fffff\"", "\"#ff9966\"", "\"#66ff99\"", "\"#9966ff\"", "\"#ff9966\""}};
 
 //     // Create a map to store user_id to community index mapping
-//     std::unordered_map<std::string, size_t> userCommunityMap;
+//      unordered_map< string, size_t> userCommunityMap;
 //     for (size_t communityIdx = 0; communityIdx < communities.size(); communityIdx++)
 //     {
 //         for (const User *user : communities[communityIdx])
@@ -270,12 +267,12 @@ void GraphVisualizer::createGraph(const std::string& matrix_file,
 //     return dot.str();
 // }
 
-std::string GraphVisualizer::generateDotFormat(
-    const std::vector<std::vector<double>>& matrix,
-    const std::vector<std::string>& user_ids,
-    const std::vector<std::vector<User*>>& communities) {
+ string GraphVisualizer::generateDotFormat(
+    const  vector< vector<double>>& matrix,
+    const  vector< string>& user_ids,
+    const  vector< vector<User*>>& communities) {
     
-    std::stringstream dot;
+     stringstream dot;
     dot << "graph Network {\n";
     
     // Graph attributes - Modified to constrain layout area
@@ -309,7 +306,7 @@ std::string GraphVisualizer::generateDotFormat(
         << "    ];\n\n";
 
     // Define colors for different communities
-    const std::array<std::string, 10> colors = {{
+    const  array< string, 10> colors = {{
         "\"#ff7f7f\"", "\"#7fbfff\"", "\"#7fff7f\"", "\"#ff7fff\"", "\"#ffff7f\"",
         "\"#7fffff\"", "\"#ff9966\"", "\"#66ff99\"", "\"#9966ff\"", "\"#ff9966\""
     }};
@@ -336,8 +333,8 @@ std::string GraphVisualizer::generateDotFormat(
     // Create vertical legend entries with adjusted positioning
     float y_pos = 16.5;  // Start below the title
     for (size_t i = 0; i < communities.size(); i++) {
-        std::string legendNodeId = "legend_" + std::to_string(i);
-        std::string legendLabelId = "legend_label_" + std::to_string(i);
+         string legendNodeId = "legend_" +  to_string(i);
+         string legendLabelId = "legend_label_" +  to_string(i);
         
         // Add legend node (colored square)
         dot << "        \"" << legendNodeId << "\" [\n"
@@ -363,7 +360,7 @@ std::string GraphVisualizer::generateDotFormat(
     dot << "    }\n\n";
 
     // Create a map to store user_id to community index mapping
-    std::unordered_map<std::string, size_t> userCommunityMap;
+     unordered_map< string, size_t> userCommunityMap;
     for (size_t communityIdx = 0; communityIdx < communities.size(); communityIdx++) {
         for (const User* user : communities[communityIdx]) {
             userCommunityMap[user->getID()] = communityIdx;

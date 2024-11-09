@@ -1,12 +1,5 @@
 #include "connection_manager.h"
 #include <bits/stdc++.h>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <iostream>
-#include <random>
-#include <queue>
-#include <limits>
 #include <omp.h>
 #include "graph_visualizer.h"
 

@@ -2,27 +2,27 @@
 #define PRINT_UTILITIES_H
 
 #include "connection_manager.h"
-#include <vector>
-#include <unordered_map>
-#include <string>
+#include  <bits/stdc++.h>
+
+using namespace std;
 
 class PrintUtilities
 {
 public:
     static void printResults(ConnectionManager &cm,
-                             const std::unordered_map<std::string, double> &pagerank,
-                             const std::vector<std::vector<User *>> &communities);
+                             const  unordered_map< string, double> &pagerank,
+                             const  vector< vector<User *>> &communities);
 
-    static void printRecommendedCommunities(const std::vector<std::vector<User *>> &communities,
+    static void printRecommendedCommunities(const  vector< vector<User *>> &communities,
                                             User *new_user);
 
-    static void printRecommendedConnections(const std::vector<std::pair<User *, User *>> &recommendations,
+    static void printRecommendedConnections(const  vector< pair<User *, User *>> &recommendations,
                                             User *new_user);
 
-    static int selectConnection(const std::vector<std::pair<User *, User *>> &recommendations);
+    static int selectConnection(const  vector< pair<User *, User *>> &recommendations);
 
 private:
-    static std::vector<int> g_validIndices;
+    static  vector<int> g_validIndices;
     static int g_currentStart;
 };
 

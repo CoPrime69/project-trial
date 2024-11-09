@@ -5,10 +5,7 @@
 using namespace std;
 
 #include "user.h"
-#include <vector>
-#include <unordered_map>
-#include <string>
-#include <utility>
+#include <bits/stdc++.h>
 
 class ConnectionManager
 {
