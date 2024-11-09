@@ -12,8 +12,9 @@
 
 using namespace std;
 
-ConnectionManager::ConnectionManager(const string& user_data_file) 
-    : adjacency_matrix(new AdjacencyMatrix("adjacency_matrix.csv")) {
+ConnectionManager::ConnectionManager(const string &user_data_file)
+    : adjacency_matrix(new AdjacencyMatrix("adjacency_matrix.csv"))
+{
     loadUserData(user_data_file);
     initializeAdjacencyMatrix();
     establishConnections();
@@ -23,112 +24,128 @@ ConnectionManager::ConnectionManager(const string& user_data_file)
 //     delete adjacency_matrix;
 // }
 
-void ConnectionManager::initializeAdjacencyMatrix() {
+void ConnectionManager::initializeAdjacencyMatrix()
+{
     // Only initialize the matrix for the first InitialNum users
-    vector<User*> initial_users;
-    for (int i = 0; i < min(InitialNum, (int)users.size()); i++) {
+    vector<User *> initial_users;
+    for (int i = 0; i < min(InitialNum, (int)users.size()); i++)
+    {
         initial_users.push_back(users[i]);
     }
-    
-    vector<vector<User*>> communities = detectCommunities();
+
+    vector<vector<User *>> communities = detectCommunities();
     adjacency_matrix->initializeBaseMatrix(initial_users, communities);
 }
 
-void ConnectionManager::addConnection(User* user1, User* user2) {
+void ConnectionManager::addConnection(User *user1, User *user2)
+{
     // First ensure both users are in the adjacency matrix
     adjacency_matrix->addNewUser(user1->getID());
     adjacency_matrix->addNewUser(user2->getID());
-    
+
     // Add the connection to the connection map
     connections[user1->getID()].push_back(user2->getID());
     connections[user2->getID()].push_back(user1->getID());
-    
+
     // Update the adjacency matrix with the new connection and weight
-    vector<vector<User*>> communities = detectCommunities();
+    vector<vector<User *>> communities = detectCommunities();
     adjacency_matrix->updateConnection(user1->getID(), user2->getID(), communities);
 }
 
-void ConnectionManager::removeConnection(User* user1, User* user2) {
-    if (!isValidConnection(user1->getID(), user2->getID())) {
+void ConnectionManager::removeConnection(User *user1, User *user2)
+{
+    if (!isValidConnection(user1->getID(), user2->getID()))
+    {
         cout << "No valid connection exists between these users." << endl;
         return;
     }
-    
+
     // Remove the connection from the adjacency matrix
     adjacency_matrix->removeConnection(user1->getID(), user2->getID());
-    
+
     // Update the connections map
     connections[user1->getID()].erase(
-        remove(connections[user1->getID()].begin(), 
-               connections[user1->getID()].end(), 
-               user2->getID()), 
+        remove(connections[user1->getID()].begin(),
+               connections[user1->getID()].end(),
+               user2->getID()),
         connections[user1->getID()].end());
-    
+
     connections[user2->getID()].erase(
-        remove(connections[user2->getID()].begin(), 
-               connections[user2->getID()].end(), 
-               user1->getID()), 
+        remove(connections[user2->getID()].begin(),
+               connections[user2->getID()].end(),
+               user1->getID()),
         connections[user2->getID()].end());
 }
 
-bool ConnectionManager::isValidConnection(const string& user1_id, const string& user2_id) {
+bool ConnectionManager::isValidConnection(const string &user1_id, const string &user2_id)
+{
     // Use the public getConnectionWeight method instead of accessing private matrix directly
     double weight = adjacency_matrix->getConnectionWeight(user1_id, user2_id);
     return weight >= 13.0;
 }
 
-void ConnectionManager::viewConnections(User* user) {
+void ConnectionManager::viewConnections(User *user)
+{
     cout << "Connections for " << user->getName() << ":" << endl;
     bool hasConnections = false;
-            
+
     // Get all users and check connections with weight threshold
-    for (const auto& other_user : users) {
-        if (other_user->getID() != user->getID()) {  // Don't check connection with self
-        double weight = adjacency_matrix->getConnectionWeight(user->getID(), other_user->getID());
-                    
-        if (weight >= 13.0) {
-            cout << other_user->getName() 
-                << " (ID: " << other_user->getID() 
-                << ", Weight: " << weight << ")" << endl;
+    for (const auto &other_user : users)
+    {
+        if (other_user->getID() != user->getID())
+        { // Don't check connection with self
+            double weight = adjacency_matrix->getConnectionWeight(user->getID(), other_user->getID());
+
+            if (weight >= 13.0)
+            {
+                cout << other_user->getName()
+                     << " (ID: " << other_user->getID()
+                     << ", Weight: " << weight << ")" << endl;
                 hasConnections = true;
             }
         }
     }
-            
-    if (!hasConnections) {
+
+    if (!hasConnections)
+    {
         cout << "No valid connections found (weight >= 15.0)." << endl;
-    }            
+    }
 }
 
-void ConnectionManager::addUser(User* new_user) {
+void ConnectionManager::addUser(User *new_user)
+{
     // Add user to the adjacency matrix first
     adjacency_matrix->addNewUser(new_user->getID());
-    
+
     // Add connections based on category and branch
     connections[new_user->getID()] = {};
-    vector<vector<User*>> communities = detectCommunities();
-    
-    for (User* user : users) {
-        if (user != new_user && 
-            user->getCategory() == new_user->getCategory() && 
-            user->getBranch() == new_user->getBranch()) {
-            
-            if (connections[new_user->getID()].size() < 5 && 
-                connections[user->getID()].size() < 5) {
-                
+    vector<vector<User *>> communities = detectCommunities();
+
+    for (User *user : users)
+    {
+        if (user != new_user &&
+            user->getCategory() == new_user->getCategory() &&
+            user->getBranch() == new_user->getBranch())
+        {
+
+            if (connections[new_user->getID()].size() < 5 &&
+                connections[user->getID()].size() < 5)
+            {
+
                 connections[new_user->getID()].push_back(user->getID());
                 connections[user->getID()].push_back(new_user->getID());
-                
+
                 // Update the connection weight in the adjacency matrix
                 adjacency_matrix->updateConnection(new_user->getID(), user->getID(), communities);
             }
         }
     }
-    
+
     users.push_back(new_user);
 }
 
-double ConnectionManager::getConnectionWeight(const string& user1_id, const string& user2_id) const {
+double ConnectionManager::getConnectionWeight(const string &user1_id, const string &user2_id) const
+{
     return adjacency_matrix->getConnectionWeight(user1_id, user2_id);
 }
 
@@ -455,99 +472,112 @@ unordered_map<string, double> ConnectionManager::calculatePageRank()
 //     return communities;
 // }
 
-vector<vector<User*>> ConnectionManager::detectCommunities() {
-    const int TARGET_COMMUNITY_SIZE = users.size() / 10; // Aim for roughly 10 communities
+vector<vector<User *>> ConnectionManager::detectCommunities()
+{
+    const int TARGET_COMMUNITY_SIZE = users.size() / 10;      // Aim for roughly 10 communities
     const int MAX_COMMUNITY_SIZE = TARGET_COMMUNITY_SIZE * 2; // Allow some flexibility
-    
-    vector<vector<User*>> communityGroups;
+
+    vector<vector<User *>> communityGroups;
     unordered_map<string, int> communities; // maps user ID to community ID
-    
+
     // Sort users by branch and category to help initial grouping
-    vector<User*> sortedUsers = users;
-    sort(sortedUsers.begin(), sortedUsers.end(), 
-         [](const User* a, const User* b) {
+    vector<User *> sortedUsers = users;
+    sort(sortedUsers.begin(), sortedUsers.end(),
+         [](const User *a, const User *b)
+         {
              if (a->getBranch() != b->getBranch())
                  return a->getBranch() < b->getBranch();
              return a->getCategory() < b->getCategory();
          });
-    
+
     // Initial assignment based on similar attributes
     int currentCommunity = 0;
-    vector<User*> currentGroup;
-    
-    for (User* user : sortedUsers) {
-        if (currentGroup.size() >= MAX_COMMUNITY_SIZE) {
-            if (!currentGroup.empty()) {
+    vector<User *> currentGroup;
+
+    for (User *user : sortedUsers)
+    {
+        if (currentGroup.size() >= MAX_COMMUNITY_SIZE)
+        {
+            if (!currentGroup.empty())
+            {
                 communityGroups.push_back(currentGroup);
                 currentGroup.clear();
                 currentCommunity++;
             }
         }
-        
+
         currentGroup.push_back(user);
         communities[user->getID()] = currentCommunity;
     }
-    
+
     // Don't forget the last group
-    if (!currentGroup.empty()) {
+    if (!currentGroup.empty())
+    {
         communityGroups.push_back(currentGroup);
     }
-    
+
     // Refinement phase - iterate a few times to balance communities
-    for (int iteration = 0; iteration < 3; iteration++) {
+    for (int iteration = 0; iteration < 3; iteration++)
+    {
         bool changed = false;
-        
-        for (User* user : users) {
+
+        for (User *user : users)
+        {
             int currentComm = communities[user->getID()];
             unordered_map<int, int> neighborCommunities;
-            
+
             // Count neighbor communities
-            for (const string& neighborId : connections[user->getID()]) {
+            for (const string &neighborId : connections[user->getID()])
+            {
                 neighborCommunities[communities[neighborId]]++;
             }
-            
+
             // Find best community based on connections and size
             int bestCommunity = currentComm;
             double bestScore = 0;
-            
-            for (const auto& pair : neighborCommunities) {
+
+            for (const auto &pair : neighborCommunities)
+            {
                 // Calculate score based on:
                 // 1. Number of connections in that community
                 // 2. Current size of that community (prefer smaller communities)
                 double communitySize = communityGroups[pair.first].size();
                 double sizeScore = 1.0 - (communitySize / MAX_COMMUNITY_SIZE);
                 double connectionScore = pair.second / (double)connections[user->getID()].size();
-                double score = connectionScore * 0.7 + sizeScore * 0.3;  // Weight factors
-                
-                if (score > bestScore && communityGroups[pair.first].size() < MAX_COMMUNITY_SIZE) {
+                double score = connectionScore * 0.7 + sizeScore * 0.3; // Weight factors
+
+                if (score > bestScore && communityGroups[pair.first].size() < MAX_COMMUNITY_SIZE)
+                {
                     bestScore = score;
                     bestCommunity = pair.first;
                 }
             }
-            
+
             // Move user if better community found
-            if (bestCommunity != currentComm && bestScore > 0.3) {  // Threshold to prevent random moves
+            if (bestCommunity != currentComm && bestScore > 0.3)
+            { // Threshold to prevent random moves
                 // Remove from current community
-                auto& currentVec = communityGroups[currentComm];
+                auto &currentVec = communityGroups[currentComm];
                 currentVec.erase(remove(currentVec.begin(), currentVec.end(), user), currentVec.end());
-                
+
                 // Add to new community
                 communityGroups[bestCommunity].push_back(user);
                 communities[user->getID()] = bestCommunity;
                 changed = true;
             }
         }
-        
-        if (!changed) break;
+
+        if (!changed)
+            break;
     }
-    
+
     // Remove empty communities
     communityGroups.erase(
         remove_if(communityGroups.begin(), communityGroups.end(),
-                 [](const vector<User*>& community) { return community.empty(); }),
-        communityGroups.end()
-    );
-    
+                  [](const vector<User *> &community)
+                  { return community.empty(); }),
+        communityGroups.end());
+
     return communityGroups;
 }
 
@@ -599,112 +629,122 @@ vector<User *> ConnectionManager::getAllUsers()
 
 vector<pair<User *, User *>> ConnectionManager::recommendConnectionsForNewUser(User *new_user)
 {
-   vector<pair<User *, User *>> recommendations;
-   unordered_map<string, int> community_map;
-   vector<vector<User *>> communities = detectCommunities();
+    vector<pair<User *, User *>> recommendations;
+    unordered_map<string, int> community_map;
+    vector<vector<User *>> communities = detectCommunities();
 
-   // Map users to their communities
-   for (int i = 0; i < communities.size(); ++i)
-   {
-       for (User *user : communities[i])
-       {
-           community_map[user->getID()] = i;
-       }
-   }
+    // Map users to their communities
+    for (int i = 0; i < communities.size(); ++i)
+    {
+        for (User *user : communities[i])
+        {
+            community_map[user->getID()] = i;
+        }
+    }
 
-   // Helper function to get user attributes as a set
-   auto getUserAttributes = [](User *user) -> unordered_set<string> {
-       unordered_set<string> attributes;
-       
-       // Add available user attributes
-       attributes.insert(user->getCategory());
-       attributes.insert(user->getBranch());
-       attributes.insert(user->getName());
-       
-       // Convert influence to a discretized string representation
-       // This helps include influence in similarity calculation
-       int influence_level = static_cast<int>(user->getInfluence() * 10);
-       attributes.insert("influence_" + to_string(influence_level));
-       
-       return attributes;
-   };
+    // Helper function to get user attributes as a set
+    auto getUserAttributes = [](User *user) -> unordered_set<string>
+    {
+        unordered_set<string> attributes;
 
-   // Calculate Jaccard similarity between two sets
-   auto calculateJaccardSimilarity = [](const unordered_set<string> &set1, 
-                                      const unordered_set<string> &set2) -> double {
-       if (set1.empty() && set2.empty()) return 0.0;
-       
-       size_t intersection_size = 0;
-       for (const auto &elem : set1) {
-           if (set2.find(elem) != set2.end()) {
-               intersection_size++;
-           }
-       }
-       
-       size_t union_size = set1.size() + set2.size() - intersection_size;
-       return static_cast<double>(intersection_size) / union_size;
-   };
+        // Add available user attributes
+        attributes.insert(user->getCategory());
+        attributes.insert(user->getBranch());
+        attributes.insert(user->getName());
 
-   vector<pair<double, pair<User *, User *>>> sortedRecommendations;
-   unordered_set<string> new_user_attributes = getUserAttributes(new_user);
+        // Convert influence to a discretized string representation
+        // This helps include influence in similarity calculation
+        int influence_level = static_cast<int>(user->getInfluence() * 10);
+        attributes.insert("influence_" + to_string(influence_level));
 
-   // Calculate similarity scores for all users in different communities
-   for (User *user : users)
-   {
-       // Skip if same user or already connected
-       if (user == new_user) {
-           continue;
-       }
+        return attributes;
+    };
 
-       // Check existing connections using adjacency matrix
-       double connection_weight = getConnectionWeight(new_user->getID(), user->getID());
-       if (connection_weight != 0) {
-           continue;
-       }
+    // Calculate Jaccard similarity between two sets
+    auto calculateJaccardSimilarity = [](const unordered_set<string> &set1,
+                                         const unordered_set<string> &set2) -> double
+    {
+        if (set1.empty() && set2.empty())
+            return 0.0;
 
-       if (community_map[user->getID()] != community_map[new_user->getID()])
-       {
-           unordered_set<string> user_attributes = getUserAttributes(user);
-           
-           // Calculate Jaccard similarity
-           double jaccard_score = calculateJaccardSimilarity(new_user_attributes, user_attributes);
-           
-           // Calculate influence similarity (0 to 1 scale)
-           double influence_diff = abs(user->getInfluence() - new_user->getInfluence());
-           double influence_similarity = 1.0 - min(influence_diff, 1.0);
-           
-           // Weighted combination of similarities
-           double final_score = jaccard_score * 0.6 +      // Base attribute similarity
-                              influence_similarity * 0.2;   // Influence similarity
+        size_t intersection_size = 0;
+        for (const auto &elem : set1)
+        {
+            if (set2.find(elem) != set2.end())
+            {
+                intersection_size++;
+            }
+        }
 
-           // Add bonus for exact matches on important attributes
-           if (user->getCategory() == new_user->getCategory()) {
-               final_score += 0.1;
-           }
-           if (user->getBranch() == new_user->getBranch()) {
-               final_score += 0.1;
-           }
-           
-           // Use negative score for sorting in descending order
-           sortedRecommendations.emplace_back(-final_score, make_pair(new_user, user));
-       }
-   }
+        size_t union_size = set1.size() + set2.size() - intersection_size;
+        return static_cast<double>(intersection_size) / union_size;
+    };
 
-   // Sort recommendations by similarity score
-   sort(sortedRecommendations.begin(), sortedRecommendations.end());
+    vector<pair<double, pair<User *, User *>>> sortedRecommendations;
+    unordered_set<string> new_user_attributes = getUserAttributes(new_user);
 
-   // Extract final recommendations
-   for (const auto &pair : sortedRecommendations)
-   {
-       recommendations.emplace_back(pair.second);
-   }
+    // Calculate similarity scores for all users in different communities
+    for (User *user : users)
+    {
+        // Skip if same user or already connected
+        if (user == new_user)
+        {
+            continue;
+        }
 
-   return recommendations;
+        // Check existing connections using adjacency matrix
+        double connection_weight = getConnectionWeight(new_user->getID(), user->getID());
+        if (connection_weight != 0)
+        {
+            continue;
+        }
+
+        if (community_map[user->getID()] != community_map[new_user->getID()])
+        {
+            unordered_set<string> user_attributes = getUserAttributes(user);
+
+            // Calculate Jaccard similarity
+            double jaccard_score = calculateJaccardSimilarity(new_user_attributes, user_attributes);
+
+            // Calculate influence similarity (0 to 1 scale)
+            double influence_diff = abs(user->getInfluence() - new_user->getInfluence());
+            double influence_similarity = 1.0 - min(influence_diff, 1.0);
+
+            // Weighted combination of similarities
+            double final_score = jaccard_score * 0.6 +       // Base attribute similarity
+                                 influence_similarity * 0.2; // Influence similarity
+
+            // Add bonus for exact matches on important attributes
+            if (user->getCategory() == new_user->getCategory())
+            {
+                final_score += 0.1;
+            }
+            if (user->getBranch() == new_user->getBranch())
+            {
+                final_score += 0.1;
+            }
+
+            // Use negative score for sorting in descending order
+            sortedRecommendations.emplace_back(-final_score, make_pair(new_user, user));
+        }
+    }
+
+    // Sort recommendations by similarity score
+    sort(sortedRecommendations.begin(), sortedRecommendations.end());
+
+    // Extract final recommendations
+    for (const auto &pair : sortedRecommendations)
+    {
+        recommendations.emplace_back(pair.second);
+    }
+
+    return recommendations;
 }
 
-void ConnectionManager::visualizeGraph(const string &output_file, 
-                                     const unordered_map<string, double> &betweenness,
-                                     const vector<vector<User *>> &communities) {
+void ConnectionManager::visualizeGraph(const string &output_file,
+                                       const unordered_map<string, double> &betweenness,
+                                       const vector<vector<User *>> &communities)
+{
     GraphVisualizer visualizer(15.0);
     visualizer.createGraph("adjacency_matrix.csv", communities, output_file);
 }
@@ -715,7 +755,6 @@ int ConnectionManager::getRandomPosition(int max)
 
 double ConnectionManager::getLuminance(const string &color)
 {
-    
 }
 
 User *ConnectionManager::getUser(const string &id) const
@@ -753,27 +792,34 @@ void ConnectionManager::loadUserData(const string &file_path)
     }
 }
 
-void ConnectionManager::establishConnections() {
+void ConnectionManager::establishConnections()
+{
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1.0);
-    
-    vector<vector<User*>> communities = detectCommunities();
+
+    vector<vector<User *>> communities = detectCommunities();
 
     // Only establish connections for the first InitialNum users
-    for (int i = 0; i < min(InitialNum, (int)users.size()); i++) {
-        User* user1 = users[i];
-        for (int j = 0; j < min(InitialNum, (int)users.size()); j++) {
-            User* user2 = users[j];
-            if (user1 != user2) {
-                double connection_probability = 
-                    (user1->getCategory() == user2->getCategory() && 
-                     user1->getBranch() == user2->getBranch()) ? 0.5 : 0.2;
-                
-                if (dis(gen) < connection_probability) {
+    for (int i = 0; i < min(InitialNum, (int)users.size()); i++)
+    {
+        User *user1 = users[i];
+        for (int j = 0; j < min(InitialNum, (int)users.size()); j++)
+        {
+            User *user2 = users[j];
+            if (user1 != user2)
+            {
+                double connection_probability =
+                    (user1->getCategory() == user2->getCategory() &&
+                     user1->getBranch() == user2->getBranch())
+                        ? 0.5
+                        : 0.2;
+
+                if (dis(gen) < connection_probability)
+                {
                     connections[user1->getID()].push_back(user2->getID());
                     connections[user2->getID()].push_back(user1->getID());
-                    
+
                     // Update the connection weight in the adjacency matrix
                     // adjacency_matrix->updateConnection(user1->getID(), user2->getID(), communities);
                 }
