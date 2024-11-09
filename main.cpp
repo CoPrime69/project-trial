@@ -1,7 +1,9 @@
 #include "connection_manager.h"
+#include "adjacency_matrix.h"
 #include "login_manager.h"
 #include <bits/stdc++.h>
 #include <algorithm>
+#include "graph_visualizer.h"
 
 using namespace std;
 
@@ -108,6 +110,8 @@ int main() {
     } else {
         cout << "You will not be added to any community." << endl;
     }
+    GraphVisualizer visualizer(15.0); // Create visualizer with threshold of 15.0
+    visualizer.createGraph("adjacency_matrix.csv", communities, "social_network_graph.png");
 
     cout << "Okie! End of Code" << endl;
 

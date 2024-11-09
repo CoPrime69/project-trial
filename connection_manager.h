@@ -1,5 +1,7 @@
 #ifndef CONNECTION_MANAGER_H
 #define CONNECTION_MANAGER_H
+#include "adjacency_matrix.h"
+
 using namespace std;
 
 #include "user.h"
@@ -33,10 +35,14 @@ public:
     void establishConnections();
     vector<User*> users;
 
+    void initializeAdjacencyMatrix();
+    double getConnectionWeight(const string& user1_id, const string& user2_id) const;
+
 
 private:
     unordered_map< string,  vector< string>> connections;
-
+    AdjacencyMatrix* adjacency_matrix;  // Add this line
+    const int InitialNum = 100;
     
 };
 
