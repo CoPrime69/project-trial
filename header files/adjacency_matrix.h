@@ -25,6 +25,8 @@ public:
     
     // Calculate connection weight based on user similarities
     double calculateConnectionWeight(User* user1, User* user2, const std::vector<std::vector<User*>>& communities);
+
+    void removeConnection(const std:: string& user1_id, const std::string& user2_id);
     
     // Save matrix to CSV file
     void saveToFile();
@@ -34,6 +36,14 @@ public:
     
     // Get connection weight between two users
     double getConnectionWeight(const std::string& user1_id, const std::string& user2_id) const;
+
+    const std::unordered_map<std::string, int>& getUserIndexMap() const {
+        return user_index_map;
+    }
+
+    const std::vector<std::vector<double>>& getMatrix() const {
+        return matrix;
+    }
     
     // Print matrix (for debugging)
     void printMatrix() const;

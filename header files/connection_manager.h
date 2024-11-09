@@ -25,6 +25,9 @@ public:
     vector< vector<User*>> detectCommunities();
     void saveUserData(const string& file_path);
     vector< pair<User*, User*>> recommendConnectionsForNewUser(User* new_user);
+    void removeConnection(User* user1, User* user2);
+    void viewConnections(User* user);
+    bool isValidConnection(const string& user1_id, const string& user2_id);
 
     void visualizeGraph(const  string& output_file, const  unordered_map< string, double>& betweenness, const  vector< vector<User*>>& communities);
     void addUser(User* new_user);

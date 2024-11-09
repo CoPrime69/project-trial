@@ -4,6 +4,8 @@
 #include <bits/stdc++.h>
 #include <algorithm>
 #include "graph_visualizer.h"
+vector<int> g_validIndices;
+int g_currentStart = 0;
 
 using namespace std;
 
@@ -12,6 +14,7 @@ void printRecommendedCommunities(const vector<vector<User*>>& communities, User*
 void printRecommendedConnections(const vector<pair<User*, User*>>& recommendations, User* new_user);
 int selectConnection(const vector<pair<User*, User*>>& recommendations);
 void addNewUser(ConnectionManager& cm, const string& name, const string& id, const string& password, const string& category, double influence, const string& branch);
+void handleConnectionManagement(ConnectionManager& cm, User* user);
 
 int main() {
     string user_data_file = "user_data.csv";
@@ -39,7 +42,7 @@ int main() {
         user = login_manager.login(id, password);
         if (!user) {
             cout << "Invalid ID or password!" << endl;
-            return 0; // Login failed
+            return 0;
         }
     } else if (choice == 2) {
         // Register
@@ -50,10 +53,9 @@ int main() {
         cout << "Enter Password: ";
         cin >> password;
 
-        // Check if the user ID already exists
         if (login_manager.isUserExist(id)) {
             cout << "User ID already exists. Please login." << endl;
-            return 0; // If ID exists, exit
+            return 0;
         }
 
         cout << "Enter Category: ";
@@ -65,9 +67,9 @@ int main() {
 
         if (!login_manager.registerUser(name, id, password, category, influence, branch)) {
             cout << "Registration failed!" << endl;
-            return 0;  // Registration failed, exit
+            return 0;
         }
-        user = login_manager.getUserById(id); // Retrieve the registered user
+        user = login_manager.getUserById(id);
     } else {
         cout << "Invalid choice!" << endl;
         return 0;
@@ -84,40 +86,84 @@ int main() {
     // Print the results
     printResults(cm, pagerank, communities);
 
-    // Ask if the user wants to join a community by making a connection
-    char join_connection_choice;
-    cout << "\nDo you want to make a connection? (y/n): ";
-    cin >> join_connection_choice;
+    // Handle connection management
+    handleConnectionManagement(cm, user);
 
-    if (join_connection_choice == 'y' || join_connection_choice == 'Y') {
-        // Recommend connections for the user
-        vector<pair<User*, User*>> recommendations = cm.recommendConnectionsForNewUser(user);
-        // cout << "\nRecommended connections for you:" << endl;
-        printRecommendedConnections(recommendations, user);
+    // Visualize the updated graph
+    cm.visualizeGraph("updated_social_network_graph.png", betweenness, communities);
 
-        // Allow the user to select a connection to add
-        int selected_connection = selectConnection(recommendations);
-        if (selected_connection >= 0) {
-            // Add the connection
-            User* selected_user = recommendations[selected_connection].second;
-            cm.addConnection(user, selected_user);
-
-            // Visualize the updated graph
-            cm.visualizeGraph("updated_social_network_graph.png", betweenness, communities);
-
-            cout << "You have successfully made connection with "<< selected_connection <<"!" << endl;
-        }
-    } else {
-        cout << "You will not be adding any more connection." << endl;
-    }
-    GraphVisualizer visualizer(15.0); // Create visualizer with threshold of 15.0
+    GraphVisualizer visualizer(15.0);
     visualizer.createGraph("adjacency_matrix.csv", communities, "social_network_graph.png");
 
-    cout << "Okie! End of Code" << endl;
-
+    cout << "Program completed successfully!" << endl;
     return 0;
 }
 
+void handleConnectionManagement(ConnectionManager& cm, User* user) {
+    while (true) {
+        cout << "\nConnection Management Menu:" << endl;
+        cout << "1. View your connections" << endl;
+        cout << "2. Add new connection" << endl;
+        cout << "3. Remove connection" << endl;
+        cout << "4. Exit" << endl;
+        cout << "Choose an option: ";
+        
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+            case 1: {
+                // View connections
+                cm.viewConnections(user);
+                break;
+            }
+            case 2: {
+                // Add new connection
+                do {
+                    vector<pair<User*, User*>> recommendations = cm.recommendConnectionsForNewUser(user);
+                    printRecommendedConnections(recommendations, user);
+
+                    int selected_connection = selectConnection(recommendations);
+                    if (selected_connection >= 0) {
+                        User* selected_user = recommendations[selected_connection].second;
+                        cm.addConnection(user, selected_user);
+                        cout << "Successfully connected with " << selected_user->getName() << "!" << endl;
+                    }
+
+                    cout << "Add another connection? (y/n): ";
+                    char more_choice;
+                    cin >> more_choice;
+                    if (more_choice != 'y' && more_choice != 'Y') break;
+                } while (true);
+                break;
+            }
+            case 3: {
+                // Remove connection
+                cout << "\nYour current connections:" << endl;
+                cm.viewConnections(user);
+                
+                cout << "\nEnter the ID of the connection you want to remove: ";
+                string remove_id;
+                cin >> remove_id;
+                
+                User* connection_to_remove = cm.getUser(remove_id);
+                if (connection_to_remove) {
+                    cm.removeConnection(user, connection_to_remove);
+                    cout << "Successfully removed connection with " << connection_to_remove->getName() << endl;
+                } else {
+                    cout << "Invalid user ID or not in your connections." << endl;
+                }
+                break;
+            }
+            case 4:
+                return;
+            default:
+                cout << "Invalid option. Please try again." << endl;
+        }
+    }
+}
+
+// [Previous helper functions remain unchanged]
 void printResults(ConnectionManager& cm, const unordered_map<string, double>& pagerank, const vector<vector<User*>>& communities) {
     cout << "Top 5 Influencers:" << endl;
     vector<pair<string, double>> top_influencers;
@@ -166,31 +212,93 @@ void printRecommendedCommunities(const vector<vector<User*>>& communities, User*
 
 void printRecommendedConnections(const vector<pair<User*, User*>>& recommendations, User* new_user) {
     cout << "\nRecommended connections based on category and influence:" << endl;
-    int counter = 0;
-    for (const auto& pair : recommendations) {
-        if (pair.first->getCategory() == new_user->getCategory() && pair.first->getBranch() == new_user->getBranch()) {
-            cout << pair.first->getName() << " <-> " << pair.second->getName() << endl;
-            counter++;
+    int validIndex = 0;
+    g_validIndices.clear();
+    
+    int skipped = 0;
+    for (int i = 0; i < recommendations.size() && validIndex < 5; i++) {
+        const auto& pair = recommendations[i];
+        
+        if ((pair.first->getCategory() == new_user->getCategory() && pair.first->getBranch() == new_user->getBranch()) ||
+            (pair.second->getCategory() == new_user->getCategory() && pair.second->getBranch() == new_user->getBranch())) {
+            
+            if (skipped < g_currentStart) {
+                skipped++;
+                continue;
+            }
+            
+            cout << validIndex << ": " << pair.first->getName() << " <-> " << pair.second->getName() 
+                 << " (Category: " << pair.second->getCategory() 
+                 << ", Branch: " << pair.second->getBranch() << ")" << endl;
+            
+            g_validIndices.push_back(i);
+            validIndex++;
         }
-        if(counter >= 5) {
-            break;
+    }
+    
+    if (validIndex == 0) {
+        if (g_currentStart == 0) {
+            cout << "No matching recommendations found." << endl;
+        } else {
+            cout << "No more recommendations available." << endl;
+            g_currentStart = 0;
         }
     }
 }
 
 int selectConnection(const vector<pair<User*, User*>>& recommendations) {
-    cout << "\nSelect a connection to add (enter index): ";
-    int index;
-    cin >> index;
-    if (index >= 0 && index < recommendations.size()) {
-        return index;
+    if (g_validIndices.empty()) {
+        return -1;
     }
-    return -1;
+    
+    cout << "\nSelect a connection to add (enter number 0-" << g_validIndices.size()-1 
+         << ", or -1 to skip, or any other negative number to exit): ";
+    int displayIndex;
+    cin >> displayIndex;
+    
+    if (displayIndex == -1) {
+        g_currentStart += 5;
+        printRecommendedConnections(recommendations, recommendations[0].first);
+        return selectConnection(recommendations);
+    } else if (displayIndex < -1) {
+        g_currentStart = 0;
+        return -1;
+    } else if (displayIndex >= 0 && displayIndex < g_validIndices.size()) {
+        g_currentStart = 0;
+        return g_validIndices[displayIndex];
+    }
+    
+    cout << "Invalid selection. Please try again." << endl;
+    return selectConnection(recommendations);
 }
 
 void addNewUser(ConnectionManager& cm, const string& name, const string& id, const string& password, const string& category, double influence, const string& branch) {
-    string new_id = id; // Ensure new user ID is unique
+    string new_id = id;
     string new_password = password;
     cm.addUser(new User(name, new_id, new_password, category, influence, branch));
     cout << "New user added!" << endl;
 }
+
+// void printRecommendedConnections(const vector<pair<User*, User*>>& recommendations, User* new_user) {
+//     cout << "\nRecommended connections based on category and influence:" << endl;
+//     int counter = 0;
+//     for (const auto& pair : recommendations) {
+//         if (pair.first->getCategory() == new_user->getCategory() && pair.first->getBranch() == new_user->getBranch()) {
+//             cout << pair.first->getName() << " <-> " << pair.second->getName() << endl;
+//             counter++;
+//         }
+//         if(counter >= 5) {
+//             break;
+//         }
+//     }
+// }
+
+// int selectConnection(const vector<pair<User*, User*>>& recommendations) {
+//     cout << "\nSelect a connection to add (enter index): ";
+//     int index;
+//     cin >> index;
+//     if (index >= 0 && index < recommendations.size()) {
+//         return index;
+//     }
+//     return -1;
+// }

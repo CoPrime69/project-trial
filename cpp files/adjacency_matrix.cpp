@@ -63,7 +63,7 @@ void AdjacencyMatrix::initializeBaseMatrix(const std::vector<User*>& users,
     }
 
     hasChanges = true;
-    // saveToFile(); // Initial save
+    saveToFile(); // Initial save
 }
 
 void AdjacencyMatrix::addNewUser(const std::string& userId) {
@@ -147,7 +147,7 @@ double AdjacencyMatrix::calculateConnectionWeight(User* user1, User* user2,
 
     // Community based weight
     if (areInSameCommunity(user1->getID(), user2->getID(), communities)) {
-        weight += getRandomWeight(11.0);
+        weight += getRandomWeight(13.0);
     }
 
     // Influence similarity (normalized)
@@ -243,6 +243,18 @@ double AdjacencyMatrix::getConnectionWeight(const std::string& user1_id, const s
     }
 
     return matrix[it1->second][it2->second];
+}
+
+void AdjacencyMatrix::removeConnection(const std:: string& user1_id, const std:: string& user2_id){
+    auto it1 = user_index_map.find(user1_id);
+    auto it2 = user_index_map.find(user2_id);
+
+
+    matrix[it1->second][it2->second] = 0;
+    matrix[it2->second][it1->second] = 0;
+
+    hasChanges = true;
+    saveToFile();
 }
 
 void AdjacencyMatrix::printMatrix() const {
