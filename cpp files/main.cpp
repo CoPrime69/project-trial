@@ -85,11 +85,11 @@ int main() {
     printResults(cm, pagerank, communities);
 
     // Ask if the user wants to join a community by making a connection
-    char join_community_choice;
-    cout << "\nDo you want to make a connection and join a community? (y/n): ";
-    cin >> join_community_choice;
+    char join_connection_choice;
+    cout << "\nDo you want to make a connection? (y/n): ";
+    cin >> join_connection_choice;
 
-    if (join_community_choice == 'y' || join_community_choice == 'Y') {
+    if (join_connection_choice == 'y' || join_connection_choice == 'Y') {
         // Recommend connections for the user
         vector<pair<User*, User*>> recommendations = cm.recommendConnectionsForNewUser(user);
         // cout << "\nRecommended connections for you:" << endl;
@@ -105,10 +105,10 @@ int main() {
             // Visualize the updated graph
             cm.visualizeGraph("updated_social_network_graph.png", betweenness, communities);
 
-            cout << "You have successfully joined the community!" << endl;
+            cout << "You have successfully made connection with "<< selected_connection <<"!" << endl;
         }
     } else {
-        cout << "You will not be added to any community." << endl;
+        cout << "You will not be adding any more connection." << endl;
     }
     GraphVisualizer visualizer(15.0); // Create visualizer with threshold of 15.0
     visualizer.createGraph("adjacency_matrix.csv", communities, "social_network_graph.png");
