@@ -5,6 +5,105 @@
 
 using namespace std;
 
+class GraphTraversal {
+public:
+    template<typename ProcessNode, typename ProcessEdge>
+    static void bfs(
+        const unordered_map<string, vector<string>>& graph,
+        const string& start_id,
+        ProcessNode process_node,
+        ProcessEdge process_edge
+    ) {
+        unordered_map<string, bool> visited;
+        queue<string> queue;
+        
+        visited[start_id] = true;
+        queue.push(start_id);
+        
+        while (!queue.empty()) {
+            string current = queue.front();
+            queue.pop();
+            
+            process_node(current);
+            
+            if (graph.find(current) != graph.end()) {
+                for (const auto& neighbor : graph.at(current)) {
+                    process_edge(current, neighbor);
+                    
+                    if (!visited[neighbor]) {
+                        visited[neighbor] = true;
+                        queue.push(neighbor);
+                    }
+                }
+            }
+        }
+    }
+    
+    static unordered_map<string, double> bfsDistance(
+        const unordered_map<string, vector<string>>& graph,
+        const string& start_id
+    ) {
+        unordered_map<string, double> distances;
+        
+        bfs(
+            graph,
+            start_id,
+            [&](const string& node) {
+                if (distances.find(node) == distances.end()) {
+                    distances[node] = node == start_id ? 0.0 : numeric_limits<double>::max();
+                }
+            },
+            [&](const string& from, const string& to) {
+                double new_dist = distances[from] + 1;
+                if (new_dist < distances[to]) {
+                    distances[to] = new_dist;
+                }
+            }
+        );
+        
+        return distances;
+    }
+    
+    static vector<string> bfsPath(
+        const unordered_map<string, vector<string>>& graph,
+        const string& start_id,
+        const string& end_id
+    ) {
+        unordered_map<string, string> predecessors;
+        bool found = false;
+        
+        bfs(
+            graph,
+            start_id,
+            [&](const string& node) {
+                if (node == end_id) {
+                    found = true;
+                }
+            },
+            [&](const string& from, const string& to) {
+                if (predecessors.find(to) == predecessors.end()) {
+                    predecessors[to] = from;
+                }
+            }
+        );
+        
+        if (!found) {
+            return vector<string>();
+        }
+        
+        vector<string> path;
+        string current = end_id;
+        while (current != start_id) {
+            path.push_back(current);
+            current = predecessors[current];
+        }
+        path.push_back(start_id);
+        reverse(path.begin(), path.end());
+        
+        return path;
+    }
+};
+
 ConnectionManager::ConnectionManager(const string &user_data_file)
     : adjacency_matrix(new AdjacencyMatrix("adjacency_matrix.csv"))
 {
@@ -142,122 +241,109 @@ double ConnectionManager::getConnectionWeight(const string &user1_id, const stri
     return adjacency_matrix->getConnectionWeight(user1_id, user2_id);
 }
 
-unordered_map<string, double> ConnectionManager::calculateBetweennessCentrality()
-{
+unordered_map<string, double> ConnectionManager::calculateBetweennessCentrality() {
     unordered_map<string, double> betweenness;
-    unordered_map<string, unordered_map<string, double>> shortest_paths;
-
-    for (const auto &user : users)
+    
+    #pragma omp parallel
     {
-        queue<string> queue;
-        unordered_map<string, double> distance;
-        unordered_map<string, vector<string>> predecessors;
-        unordered_map<string, double> dependency;
-
-        for (const auto &u : users)
-        {
-            distance[u->getID()] = numeric_limits<double>::max();
-            dependency[u->getID()] = 0.0;
-        }
-
-        distance[user->getID()] = 0.0;
-        queue.push(user->getID());
-
-        while (!queue.empty())
-        {
-            string curr = queue.front();
-            queue.pop();
-
-            for (const auto &neighbor_id : connections[curr])
-            {
-                User *neighbor = getUser(neighbor_id);
-                if (distance[neighbor->getID()] == numeric_limits<double>::max())
-                {
-                    distance[neighbor->getID()] = distance[curr] + 1;
-                    queue.push(neighbor->getID());
-                    predecessors[neighbor->getID()].push_back(curr);
-                    if (distance[neighbor->getID()] == distance[curr] + 1)
-                    {
-                        shortest_paths[user->getID()][neighbor->getID()] += 1.0;
+        unordered_map<string, double> local_betweenness;
+        
+        #pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < users.size(); i++) {
+            const auto& user = users[i];
+            queue<string> queue;
+            unordered_map<string, double> distance;
+            unordered_map<string, vector<string>> predecessors;
+            stack<string> stack;
+            unordered_map<string, double> dependency;
+            
+            for (const auto& u : users) {
+                distance[u->getID()] = numeric_limits<double>::max();
+            }
+            
+            distance[user->getID()] = 0;
+            queue.push(user->getID());
+            
+            // Forward pass - shortest paths calculation
+            while (!queue.empty()) {
+                string curr = queue.front();
+                queue.pop();
+                stack.push(curr);
+                
+                for (const auto& neighbor_id : connections[curr]) {
+                    if (distance[neighbor_id] == numeric_limits<double>::max()) {
+                        queue.push(neighbor_id);
+                        distance[neighbor_id] = distance[curr] + 1;
+                    }
+                    if (distance[neighbor_id] == distance[curr] + 1) {
+                        predecessors[neighbor_id].push_back(curr);
                     }
                 }
             }
-        }
-
-        stack<string> stack;
-        for (const auto &u : users)
-        {
-            if (u->getID() != user->getID())
-            {
-                dependency[u->getID()] = 0.0;
-                if (distance[u->getID()] != numeric_limits<double>::max())
-                {
-                    stack.push(u->getID());
+            
+            // Backward pass - dependency accumulation
+            while (!stack.empty()) {
+                string w = stack.top();
+                stack.pop();
+                
+                for (const auto& v : predecessors[w]) {
+                    double factor = (1.0 + dependency[w]) / predecessors[w].size();
+                    dependency[v] += factor;
+                }
+                
+                if (w != user->getID()) {
+                    local_betweenness[w] += dependency[w];
                 }
             }
         }
-
-        while (!stack.empty())
+        
+        #pragma omp critical
         {
-            string w = stack.top();
-            stack.pop();
-            for (const auto &v : predecessors[w])
-            {
-                dependency[v] += (1.0 + dependency[w]) * shortest_paths[user->getID()][w] / shortest_paths[user->getID()][v];
-            }
-            if (w != user->getID())
-            {
-                betweenness[w] += dependency[w];
+            for (const auto& pair : local_betweenness) {
+                betweenness[pair.first] += pair.second;
             }
         }
     }
-
+    
     return betweenness;
 }
 
-unordered_map<string, double> ConnectionManager::calculateClosenessCentrality()
-{
+unordered_map<string, double> ConnectionManager::calculateClosenessCentrality() {
     unordered_map<string, double> closeness;
-    unordered_map<string, double> total_distance;
-
-    for (const auto &user : users)
+    
+    #pragma omp parallel
     {
-        queue<string> queue;
-        unordered_map<string, double> distance;
-
-        for (const auto &u : users)
-        {
-            distance[u->getID()] = numeric_limits<double>::max();
-        }
-
-        distance[user->getID()] = 0.0;
-        queue.push(user->getID());
-
-        while (!queue.empty())
-        {
-            string curr = queue.front();
-            queue.pop();
-
-            for (const auto &neighbor_id : connections[curr])
-            {
-                User *neighbor = getUser(neighbor_id);
-                if (distance[neighbor->getID()] == numeric_limits<double>::max())
-                {
-                    distance[neighbor->getID()] = distance[curr] + 1;
-                    queue.push(neighbor->getID());
+        unordered_map<string, double> local_closeness;
+        
+        #pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < users.size(); i++) {
+            const auto& user = users[i];
+            auto distances = GraphTraversal::bfsDistance(connections, user->getID());
+            
+            double total_distance = 0.0;
+            int reachable_nodes = 0;
+            
+            for (const auto& dist : distances) {
+                if (dist.second != numeric_limits<double>::max()) {
+                    total_distance += dist.second;
+                    reachable_nodes++;
                 }
             }
+            
+            // Normalize by number of reachable nodes
+            if (reachable_nodes > 1) { // Exclude self from count
+                local_closeness[user->getID()] = (reachable_nodes - 1) / total_distance;
+            } else {
+                local_closeness[user->getID()] = 0.0;
+            }
         }
-
-        double total_dist = 0.0;
-        for (const auto &u : users)
+        
+        #pragma omp critical
         {
-            total_dist += distance[u->getID()];
+            closeness.insert(local_closeness.begin(), local_closeness.end());
         }
-        closeness[user->getID()] = users.size() / total_dist;
-        total_distance[user->getID()] = total_dist;
     }
-
+    
     return closeness;
 }
 
